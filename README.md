@@ -7,6 +7,9 @@
 
 > 专为中文环境优化 | 真实 IP 透传 | 现代化 UI 管理面板
 
+<img width="2560" height="1600" alt="图片" src="https://github.com/user-attachments/assets/f36fc73a-27a1-41c0-841b-50357bc15a21" />
+
+
 ## 📖 简介
 
 **EMBY-PROXY-UI** 是一个运行在 Cloudflare Edge 上的单文件反向代理系统。它允许你通过 Cloudflare 的全球网络隐藏和加速你的家庭 NAS 或 VPS 上的媒体服务器（Emby, Jellyfin, Plex 等）。
