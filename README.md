@@ -22,7 +22,7 @@
     对画质和拖拽速度有极致要求的用户（请用直连）。
 
     日均流量巨大的“机场级”公益服（请上付费 CDN）。
-  缺点：https://github.com/axuitomo/CF-EMBY-PROXY-UI/blob/main/defect.md
+ ## 缺点：https://github.com/axuitomo/CF-EMBY-PROXY-UI/blob/main/defect.md
     
 ## ✨ 核心特性
 
