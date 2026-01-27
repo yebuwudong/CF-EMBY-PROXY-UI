@@ -59,7 +59,7 @@
 
 ## ⚙️ 环境变量 (必填)
 
-部署时需要在 Workers 的 `设置` -> `Variables` 中配置以下变量：
+部署时需要在 Workers 的 `设置`  中配置以下变量：
 
 | 变量名 (Key) | 类型 (Type) | 必填 (Required) | 说明 (Description) | 示例值 (Example) |
 | :--- | :--- | :--- | :--- | :--- |
