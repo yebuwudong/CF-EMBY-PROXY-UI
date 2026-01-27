@@ -1,6 +1,6 @@
 # 🎥 EMBY-PROXY-UI (Cloudflare Worker Edition)
 
-> **版本**: V13.0 
+> **版本**: V13.1 
 > 一个基于 Cloudflare Workers 的高性能、高安全性的 Emby/Jellyfin 反向代理网关。
 > 专为家庭媒体服务器设计，提供真实 IP 穿透、极致流媒体优化、Web 管理后台及防暴力破解安全机制。
 <img width="2560" height="1600" alt="图片" src="https://github.com/user-attachments/assets/b962ed15-192d-443d-8fc5-b9cce3ca360c" />
@@ -59,7 +59,7 @@
 
 ## ⚙️ 环境变量 (必填)
 
-部署时需要在 Workers 的 `Settings` -> `Variables` 中配置以下变量：
+部署时需要在 Workers 的 `设置` -> `Variables` 中配置以下变量：
 
 | 变量名 (Key) | 类型 (Type) | 必填 (Required) | 说明 (Description) | 示例值 (Example) |
 | :--- | :--- | :--- | :--- | :--- |
@@ -147,4 +147,4 @@ Worker 本质是中转代理。如果您的源站在国内，流量路径为 `�
 
 ---
 
-**License**: GNU
+**License**: GNU General Public License v3.0
