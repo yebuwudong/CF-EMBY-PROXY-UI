@@ -1,6 +1,6 @@
 # 🎥 EMBY-PROXY-PRO (Cloudflare Worker Edition)
 
-> **版本**: V11.5 Final Polish
+> **版本**: V13.0 Final Polish
 > 一个基于 Cloudflare Workers 的高性能、高安全性的 Emby/Jellyfin 反向代理网关。
 > 专为家庭媒体服务器设计，提供真实 IP 穿透、极致流媒体优化、Web 管理后台及防暴力破解安全机制。
 <img width="2560" height="1600" alt="图片" src="https://github.com/user-attachments/assets/b962ed15-192d-443d-8fc5-b9cce3ca360c" />
@@ -97,8 +97,8 @@
 
 1. 还在 **Settings** -> **Variables** 页面。
 2. 在 **Environment Variables** 区域点击 **Add Variable**。
-3. **Variable name** 填写：`ADMIN_PASS`。
-4. **Value** 填写你的后台登录密码。
+3. **Variable name** 填写：`ADMIN_PASS`。**Value** 填写你的后台登录密码。
+4. **Variable name** 填写  `JWT_SECRET`  **Value** 填写随机生成字符串。
 5. 点击 **Encrypt** (加密存储)，然后 **Save and Deploy**。
 
 ---
@@ -131,6 +131,17 @@
 
 * 点击列表右上角的 **导出** 按钮，可下载 `json` 备份文件。
 * 点击 **导入** 可恢复数据或批量添加节点（支持热更新，缓存立即刷新）。
+
+---
+### ⚙️ 环境变量配置表 (Environment Variables)
+
+请在 Cloudflare Workers 的 **Settings** -> **Variables** 中添加以下变量：
+
+| 变量名 (Key) | 类型 (Type) | 必填 (Required) | 说明 (Description) | 示例值 (Example) |
+| :--- | :--- | :--- | :--- | :--- |
+| **`ENI_KV`** | **KV Namespace** | **是** | **核心数据库绑定**。<br>必须绑定到一个预先创建好的 KV 命名空间，用于存储节点配置、日志和防爆破计数器。<br>⚠️ **变量名必须严格命名为 `ENI_KV`，否则代码无法运行。** | (在下拉菜单中选择你创建的 KV 空间) |
+| **`ADMIN_PASS`** | **Encrypted** | **是** | **后台登录密码**。<br>用于管理后台 (`/admin`) 的登录验证。<br>如果未设置 `JWT_SECRET`，它也会被强制用作 Token 签名密钥。 | `MySecureP@ssw0rd` |
+| **`JWT_SECRET`** | **Encrypted** | 否 (建议) | **JWT 令牌签名密钥**。<br>用于生成和验证登录 Token。<br>设置此变量可实现“修改登录密码但不强制所有用户掉线”的安全分离效果。<br>如果不填，默认回退使用 `ADMIN_PASS`。 | `sk_random_string_xyz123` |
 
 ---
 
