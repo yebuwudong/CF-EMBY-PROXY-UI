@@ -1,4 +1,5 @@
-//EMBY-PROXY-PRO V13.0 (Simplicity Edition)
+//EMBY-PROXY-PRO V13.1 (Simplicity Edition)
+//放弃原先“每个节点一个 KV Key”的存储方式，改为使用一个 KV Key（例如 system:nodes）存储所有节点的配置 JSON。
 
 // ============================================================================
 // 1. CONFIG MODULE
@@ -109,39 +110,47 @@ const Auth = {
 };
 
 // ============================================================================
-// 3. DATABASE MODULE (KV Read Optimized)
+// 3. DATABASE MODULE (Refactored: Single Key Storage)
 // ============================================================================
 const Database = {
+    // 定义统一存储所有节点的 Key
+    STORAGE_KEY: "system:nodes",
+
     // 获取单个节点配置（带 Cache API 缓存）
     async getNode(nodeName, env, ctx) {
         const cache = caches.default;
-        const cacheUrl = new URL(`https://internal-config-cache/node/${nodeName}`); // 规范化缓存键
+        const cacheUrl = new URL(`https://internal-config-cache/node/${nodeName}`);
         
+        // 1. 尝试从 Cache API 获取
         let response = await cache.match(cacheUrl);
         if (response) return await response.json();
 
-        // 缓存未命中：读 KV
-        const nodeData = await env.ENI_KV.get(`node:${nodeName}`, { type: "json" });
+        // 2. 缓存未命中：读取总配置 (消耗 1 次 KV 读取)
+        // 相比原版读取单个 Key，这里读取的是包含所有节点的 JSON，
+        // 但对于 Cloudflare KV 而言，读取 1KB 和 100KB 的延迟差异极小，
+        // 且极大地优化了 list 操作的性能。
+        const allNodes = await env.ENI_KV.get(this.STORAGE_KEY, { type: "json" }) || {};
+        const nodeData = allNodes[nodeName];
+
         if (nodeData) {
-            // 写入缓存 (有效期 60秒)
+            // 3. 写入独立缓存 (有效期 60秒)
             const jsonStr = JSON.stringify(nodeData);
             const cacheResp = new Response(jsonStr, { headers: { "Cache-Control": "public, max-age=60" } });
             ctx.waitUntil(cache.put(cacheUrl, cacheResp));
+            return nodeData;
         }
-        return nodeData;
+        return null;
     },
 
-    // 添加日志 (带去重和异步写入)
+    // 添加日志 (保持原逻辑，未改动)
     async addLog(env, request, name, target) {
         try {
             const ip = request.headers.get("cf-connecting-ip") || "Unknown";
             const timeStr = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
             
-            // 读取现有日志 (无法缓存，因为需要追加)
             let logsData = await env.ENI_KV.get("system:logs");
             let logs = logsData ? JSON.parse(logsData) : [];
             
-            // 简单去重：1分钟内同一IP同一节点不记录
             if (logs.length > 0 && logs[0].ip === ip && logs[0].time.substring(0, 16) === timeStr.substring(0, 16)) return;
 
             const geo = request.cf ? `${request.cf.city || 'Unk'} [${request.cf.country || 'CN'}]` : "Unknown";
@@ -152,74 +161,87 @@ const Database = {
         } catch (e) { /* Ignore log errors */ }
     },
 
-    // 处理管理 API (增删改查) - [优化核心]
+    // 处理管理 API (增删改查) - [核心优化]
     async handleApi(request, env) {
         const data = await request.json();
         const cache = caches.default;
-        // 定义列表的缓存 Key
         const listCacheKey = "https://internal-config-cache/system:nodes-list";
+
+        // 预先读取所有节点数据 (1 次 KV 读取)
+        let allNodes = await env.ENI_KV.get(this.STORAGE_KEY, { type: "json" }) || {};
+        let hasChanges = false;
 
         switch (data.action) {
             case "save": 
             case "import":
                 const nodesToSave = data.action === "save" ? [data] : data.nodes;
+                
                 for (const n of nodesToSave) {
                     if (n.name && n.target) {
-                        // 1. SSRF 安全检查 (新增)
+                        // SSRF 检查保留 (注：需确保 Validator 存在，否则此处逻辑会被跳过)
                         if (typeof Validator !== 'undefined' && !Validator.isValidTarget(n.target)) {
-                            continue; // 跳过非法目标
+                            continue;
                         }
 
-                        // 2. 清除该节点的独立缓存
-                        await cache.delete(`https://internal-config-cache/node/${n.name}`);
-                        // 3. 写入 KV
-                        await env.ENI_KV.put(`node:${n.name}`, JSON.stringify({ 
+                        // 更新内存对象
+                        allNodes[n.name] = { 
                             secret: n.secret || "", 
                             target: n.target 
-                        }));
+                        };
+
+                        // 清除该节点的独立缓存
+                        await cache.delete(`https://internal-config-cache/node/${n.name}`);
+                        hasChanges = true;
                     }
                 }
-                // 4. [优化] 数据变更，清除列表缓存
-                await cache.delete(listCacheKey);
+
+                // 如果有变动，统一写回 KV (1 次 KV 写入)
+                if (hasChanges) {
+                    await env.ENI_KV.put(this.STORAGE_KEY, JSON.stringify(allNodes));
+                    await cache.delete(listCacheKey);
+                }
                 return new Response(JSON.stringify({ success: true }));
 
             case "delete":
-                // 清除独立缓存
-                await cache.delete(`https://internal-config-cache/node/${data.name}`);
-                // 删除 KV
-                await env.ENI_KV.delete(`node:${data.name}`);
-                // [优化] 数据变更，清除列表缓存
-                await cache.delete(listCacheKey);
+                if (allNodes[data.name]) {
+                    delete allNodes[data.name];
+                    
+                    // 写回 KV
+                    await env.ENI_KV.put(this.STORAGE_KEY, JSON.stringify(allNodes));
+                    
+                    // 清除缓存
+                    await cache.delete(`https://internal-config-cache/node/${data.name}`);
+                    await cache.delete(listCacheKey);
+                }
                 return new Response(JSON.stringify({ success: true }));
 
             case "list":
-                let nodes = [];
+                // [优化成果]
+                // 此时 allNodes 已经在函数开头读取了一次 KV。
+                // 相比原版遍历所有 Key 再逐个 Get (N+1)，这里只有 1 次 Get。
                 
-                // [优化] 1. 尝试从缓存获取节点列表
+                let nodesList = [];
                 const cachedList = await cache.match(listCacheKey);
-                if (cachedList) {
-                    nodes = await cachedList.json();
-                } else {
-                    // [优化] 2. 缓存未命中：执行昂贵的 KV 遍历 (N+1次读取)
-                    const list = await env.ENI_KV.list({ prefix: "node:" });
-                    nodes = await Promise.all(list.keys.map(async (k) => ({
-                        name: k.name.replace("node:", ""),
-                        ...(await env.ENI_KV.get(k.name, { type: "json" }))
-                    })));
 
-                    // [优化] 3. 将结果写入缓存 (有效期 60秒)
-                    // 这样接下来的 12 次(5秒刷新一次)请求都将命中内存，0 KV消耗
-                    const listResp = new Response(JSON.stringify(nodes), {
+                if (cachedList) {
+                    nodesList = await cachedList.json();
+                } else {
+                    // 将对象转回数组格式供前端使用
+                    nodesList = Object.keys(allNodes).map(key => ({
+                        name: key,
+                        ...allNodes[key]
+                    }));
+
+                    const listResp = new Response(JSON.stringify(nodesList), {
                         headers: { "Cache-Control": "public, max-age=60" }
                     });
-                    // 注意：使用 waitUntil 避免阻塞响应，但为了确保下次立即生效，这里最好不用 waitUntil
                     await cache.put(listCacheKey, listResp); 
                 }
 
-                // 日志变化频繁，依然实时读取 (1次读取)
+                // 日志部分
                 const logs = await env.ENI_KV.get("system:logs", { type: "json" }) || [];
                 
-                return new Response(JSON.stringify({ nodes, logs }));
+                return new Response(JSON.stringify({ nodes: nodesList, logs }));
                 
             default:
                 return new Response("Invalid Action", { status: 400 });
