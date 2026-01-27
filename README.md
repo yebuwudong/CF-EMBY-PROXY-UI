@@ -61,10 +61,11 @@
 
 部署时需要在 Workers 的 `Settings` -> `Variables` 中配置以下变量：
 
-| 变量名 (Key) | 类型 | 说明 | 示例 |
-| --- | --- | --- | --- |
-| **`ADMIN_PASS`** | Encrypted | **必需**。管理后台的登录密码，同时也是 JWT 签名的密钥。请设置复杂的字符串。 | `MyS3cretP@ssw0rd` |
-| **`ENI_KV`** | KV Namespace | **必需**。绑定的 KV 命名空间变量名。**必须严格命名为 `ENI_KV**`，否则代码无法运行。 | (在绑定时设置) |
+| 变量名 (Key) | 类型 (Type) | 必填 (Required) | 说明 (Description) | 示例值 (Example) |
+| :--- | :--- | :--- | :--- | :--- |
+| **`ENI_KV`** | **KV Namespace** | **是** | **核心数据库绑定**。<br>必须绑定到一个预先创建好的 KV 命名空间，用于存储节点配置、日志和防爆破计数器。<br>⚠️ **变量名必须严格命名为 `ENI_KV`，否则代码无法运行。** | (在下拉菜单中选择你创建的 KV 空间) |
+| **`ADMIN_PASS`** | **Encrypted** | **是** | **后台登录密码**。<br>用于管理后台 (`/admin`) 的登录验证。<br>如果未设置 `JWT_SECRET`，它也会被强制用作 Token 签名密钥。 | `MySecureP@ssw0rd` |
+| **`JWT_SECRET`** | **Encrypted** | 否 (建议) | **JWT 令牌签名密钥**。<br>用于生成和验证登录 Token。<br>设置此变量可实现“修改登录密码但不强制所有用户掉线”的安全分离效果。<br>如果不填，默认回退使用 `ADMIN_PASS`。 | `sk_random_string_xyz123` |
 
 ---
 
@@ -131,17 +132,6 @@
 
 * 点击列表右上角的 **导出** 按钮，可下载 `json` 备份文件。
 * 点击 **导入** 可恢复数据或批量添加节点（支持热更新，缓存立即刷新）。
-
----
-### ⚙️ 环境变量配置表 (Environment Variables)
-
-请在 Cloudflare Workers 的 **Settings** -> **Variables** 中添加以下变量：
-
-| 变量名 (Key) | 类型 (Type) | 必填 (Required) | 说明 (Description) | 示例值 (Example) |
-| :--- | :--- | :--- | :--- | :--- |
-| **`ENI_KV`** | **KV Namespace** | **是** | **核心数据库绑定**。<br>必须绑定到一个预先创建好的 KV 命名空间，用于存储节点配置、日志和防爆破计数器。<br>⚠️ **变量名必须严格命名为 `ENI_KV`，否则代码无法运行。** | (在下拉菜单中选择你创建的 KV 空间) |
-| **`ADMIN_PASS`** | **Encrypted** | **是** | **后台登录密码**。<br>用于管理后台 (`/admin`) 的登录验证。<br>如果未设置 `JWT_SECRET`，它也会被强制用作 Token 签名密钥。 | `MySecureP@ssw0rd` |
-| **`JWT_SECRET`** | **Encrypted** | 否 (建议) | **JWT 令牌签名密钥**。<br>用于生成和验证登录 Token。<br>设置此变量可实现“修改登录密码但不强制所有用户掉线”的安全分离效果。<br>如果不填，默认回退使用 `ADMIN_PASS`。 | `sk_random_string_xyz123` |
 
 ---
 
