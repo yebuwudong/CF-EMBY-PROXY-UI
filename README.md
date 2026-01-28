@@ -1,4 +1,4 @@
-# CF-EMBY-PROXY-UI 最新版本：V16.1
+# CF-EMBY-PROXY-UI 最新版本：V16.1 【KV读写大幅减少，worker请求大幅减少】
 
 ## 描述
 
