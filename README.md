@@ -66,21 +66,21 @@ cf-emby-proxy-ui它是一个反代EMBY实现加速以及EMBY源站IP隐藏的项
 
 ---边缘证书  
 
-- **始终使用 HTTPS**  开启
+- 开启**始终使用 HTTPS**  
 - **最低 TLS 版本**选择TLS1.2 
-- **随机加密**  开启
-- **TLS 1.3**  开启
-- **自动 HTTPS 重写**  开启
+- 开启**随机加密**  
+- 开启**TLS 1.3**  
+- 开启**自动 HTTPS 重写**  
 
 #### 速度
 ---设置
 
-- **站点推荐设置** 开启
+- 开启**站点推荐设置** 
 
 
 --- Smart Shield
 
-- **Smart Shield** 开启
+- 开启**Smart Shield** 
 
 #### 缓存
 
@@ -91,12 +91,12 @@ cf-emby-proxy-ui它是一个反代EMBY实现加速以及EMBY源站IP隐藏的项
 
 ---Tiered Cache
 
-- 开启**Tiered Cache** 开启
+- 开启**Tiered Cache** 
 
 
 ####  网络
 
-- 开启**WebSockets** 开启
+- 开启**WebSockets** 
 
 
 ---
