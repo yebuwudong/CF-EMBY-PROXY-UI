@@ -1,5 +1,5 @@
-# CF-EMBY-PROXY-UI 最新版本：V16.1 【KV读写大幅减少，worker请求大幅减少】
-
+## CF-EMBY-PROXY-UI 最新版本：V16.1 
+//最新版【KV读写大幅减少，worker请求大幅减少】
 ## 描述
 
 cf-emby-proxy-ui它是一个反代EMBY实现加速以及EMBY源站IP隐藏的项目。鉴权使用的是管理员密码+JWT密钥的组合，不手动设置JWT密钥，JWT密钥会退回到与管理员密码相同。有面板可以设置多个反代，同时也提供了代理数据的导入和导出。
