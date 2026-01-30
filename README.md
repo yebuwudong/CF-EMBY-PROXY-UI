@@ -212,7 +212,7 @@
 
 ## **缓存**
 
-**自动区分**：媒体文件（不缓存）和静态资源（图片、JS、CSS 等缓存）TTL 设为 1 天
+**自动区分**：媒体文件（不缓存）和静态资源（图片、JS、CSS 字幕等缓存）TTL 设为 1 天
 
 Workers Cache API 缓存 KV 读取结果，减少KV读写次数
 
@@ -253,7 +253,8 @@ Workers Cache API 缓存 KV 读取结果，减少KV读写次数
 
 ### 1. 动态代理与请求分发 (`Proxy` 模块)
 
-* **路径重定向**：当访问根节点（如 `/node_name`）时，自动重定向到 Emby 的 Web 界面 `/web/index.html`。
+* **优先使用API访问，使用API访问禁用WEB端**
+* **路径重定向移除**
 * **WebSocket 支持**：支持 Emby 的实时通信（如播放控制、通知），通过 `WebSocketPair` 实现。
 * **智能缓存策略**：
 * **静态资源**：针对图片、JS、CSS 等静态文件，开启 `cacheEverything` 并设置 24 小时缓存。
