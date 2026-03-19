@@ -1,3 +1,5 @@
+#最新版本有问题请使用上一版本
+
  # CF-EMBY-PROXY-UI
 
 <p align="center">
